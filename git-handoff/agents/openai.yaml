@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Handoff"
+  short_description: "Push work and write a handoff note"
+  default_prompt: "Use $git-handoff to wrap up this repo safely, create CODEX_HANDOFF.md, and prepare a concise confirmed commit-and-push handoff."

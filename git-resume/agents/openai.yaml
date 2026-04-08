@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Resume"
+  short_description: "Resume work from CODEX_HANDOFF.md"
+  default_prompt: "Use $git-resume to read CODEX_HANDOFF.md, verify the current repo state on this machine, and continue the next step safely."
