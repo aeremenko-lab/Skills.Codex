@@ -9,6 +9,8 @@ from pathlib import Path
 
 SECTION_RE = re.compile(r"^##\s+(.*)$")
 SNAPSHOT_RE = re.compile(r"^- ([^:]+): `(.*)`$")
+FILENAME_RE = re.compile(r"^HANDOFF_NOTE_\d{4}\.\d{2}\.\d{2}_\d{2}-\d{2}\.md$")
+BRANCH_SLUG_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 def run_git(repo: Path, *args: str) -> str:
@@ -33,6 +35,29 @@ def try_git(repo: Path, *args: str) -> str:
     if result.returncode != 0:
         return ""
     return result.stdout.strip()
+
+
+def branch_slug(branch: str) -> str:
+    slug = BRANCH_SLUG_RE.sub("__", branch.strip())
+    return slug or "detached-head"
+
+
+def latest_handoff_in(directory: Path) -> Path | None:
+    if not directory.exists():
+        return None
+    candidates = [path for path in directory.iterdir() if path.is_file() and FILENAME_RE.match(path.name)]
+    if not candidates:
+        return None
+    return sorted(candidates, key=lambda path: path.name, reverse=True)[0]
+
+
+def resolve_handoff(repo: Path) -> Path | None:
+    branch = run_git(repo, "rev-parse", "--abbrev-ref", "HEAD")
+    branch_path = repo / ".codex" / "handoffs" / branch_slug(branch)
+    branch_note = latest_handoff_in(branch_path)
+    if branch_note is not None:
+        return branch_note
+    return latest_handoff_in(repo)
 
 
 def current_snapshot(repo: Path) -> dict[str, object]:
@@ -173,22 +198,36 @@ def render_report(repo: Path, handoff: Path, parsed: dict[str, object], snapshot
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Compare CODEX_HANDOFF.md with current git state.")
+    parser = argparse.ArgumentParser(description="Compare the latest handoff note with current git state.")
     parser.add_argument("--repo", default=".", help="Path to the git repository")
-    parser.add_argument("--handoff", default="CODEX_HANDOFF.md", help="Path to the handoff note")
+    parser.add_argument(
+        "--handoff",
+        help="Path to the handoff note. Defaults to the newest branch-scoped handoff note with repo-root fallback.",
+    )
     args = parser.parse_args()
 
     repo = Path(args.repo).resolve()
-    handoff = Path(args.handoff)
-    if not handoff.is_absolute():
-        handoff = (repo / handoff).resolve()
-
-    if not handoff.exists():
-        print(f"Handoff note not found: {handoff}", file=sys.stderr)
-        return 1
 
     try:
         run_git(repo, "rev-parse", "--git-dir")
+        if args.handoff:
+            handoff = Path(args.handoff)
+            if not handoff.is_absolute():
+                handoff = (repo / handoff).resolve()
+        else:
+            handoff = resolve_handoff(repo)
+            if handoff is None:
+                branch = run_git(repo, "rev-parse", "--abbrev-ref", "HEAD")
+                print(
+                    f"No handoff note found in {repo / '.codex' / 'handoffs' / branch_slug(branch)} or {repo}",
+                    file=sys.stderr,
+                )
+                return 1
+
+        if not handoff.exists():
+            print(f"Handoff note not found: {handoff}", file=sys.stderr)
+            return 1
+
         parsed = parse_handoff(handoff)
         snapshot = current_snapshot(repo)
         print(render_report(repo, handoff, parsed, snapshot))

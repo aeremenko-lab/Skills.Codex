@@ -7,7 +7,7 @@ description: Use when the user wants to wrap up work in a git repository, prepar
 
 ## Overview
 
-Use this skill to end a work session cleanly in a git repo: inspect branch and remote state, make sure the intended changes are committed, write a clear handoff note, and push the result so the next session can resume quickly.
+Use this skill to end a work session cleanly in a git repo: inspect branch and remote state, make sure the intended changes are committed, write a clear timestamped handoff note in the current branch's handoff area, and push the result so the next session can resume quickly.
 
 Default to the smallest safe wrap-up. Preserve unrelated local changes, do not rewrite history, and pause when branch state is ambiguous.
 
@@ -29,21 +29,23 @@ Default to the smallest safe wrap-up. Preserve unrelated local changes, do not r
    - If there are intended local changes, commit them intentionally before the handoff note.
    - If the branch is behind or diverged from upstream, stop and explain the situation before pulling, rebasing, or force-pushing.
 3. Draft the handoff note.
-   - Prefer `CODEX_HANDOFF.md` as the default note name in the repo root.
-   - If the repo already has a clear convention and the user wants to preserve it, use that instead.
+   - Every handoff note must include the timestamp directly in the file name.
+   - Prefer `.codex/handoffs/<branch-slug>/HANDOFF_NOTE_YYYY.MM.DD_HH-MM.md`, where `<branch-slug>` is a filesystem-safe version of the current branch name.
+   - This branch-scoped location is the default on any branch, including feature branches, so resume logic can reliably find the right note for the current line of work.
+   - Use `HANDOFF_NOTE_YYYY.MM.DD_HH-MM.md` in the repo root only as a fallback for legacy repos that already keep handoff notes there or when the user explicitly asks for that simpler layout.
    - Include: current goal, what was completed, what remains, important files, verification performed, blockers or risks, the best next step, and session metadata.
    - Session metadata should include the local timestamp and the hostname of the machine that created the handoff note so cross-machine resumes are easier to interpret.
    - Use the bundled script to create a git-state snapshot, then improve the prose using the actual task context from the session.
 4. Commit safely.
    - Keep code changes and handoff-note changes together only when that is the clearest outcome.
    - If the user asks to commit, do not commit immediately. First suggest a concise commit message and ask for confirmation.
-   - The suggested commit message must always end with `docs: updated codex_handoff.md`.
+   - The suggested commit message must always end with `docs: updated handoff note`.
    - Prefer this format:
 
 ```text
 <concise summary of the work>
 
-docs: updated codex_handoff.md
+docs: updated handoff note
 ```
 
    - Never amend or rewrite history unless the user explicitly asks.
@@ -51,7 +53,7 @@ docs: updated codex_handoff.md
    - Push the current branch to its upstream. If no upstream exists, use `git push -u <remote> <branch>`.
    - Re-check `git status --short --branch` after pushing to confirm the branch is no longer ahead.
 6. Report the handoff cleanly.
-   - Report back concisely: branch, whether anything was committed, whether push succeeded, where `CODEX_HANDOFF.md` lives, and the best resume prompt.
+   - Report back concisely: branch, whether anything was committed, whether push succeeded, where the handoff note lives, and the best resume prompt.
 
 ## Safety rules
 
@@ -90,17 +92,17 @@ Use a compact, repo-friendly structure:
 The resume prompt should be directly usable in a future Codex session, for example:
 
 ```text
-Read CODEX_HANDOFF.md, verify the current branch and repo state, then continue with the next step.
+Read the latest branch handoff note from `.codex/handoffs/<branch-slug>/` (or the repo root if none exists there), verify the current branch and repo state, then continue with the next step.
 ```
 
 ## Bundled resource
 
-- `scripts/draft_handoff.py`: builds a markdown snapshot from the current git repository, including branch, upstream, ahead/behind status, changed files, and recent commits. Run it from the repo root or pass `--repo`.
+- `scripts/draft_handoff.py`: builds a markdown snapshot from the current git repository, including branch, upstream, ahead/behind status, changed files, and recent commits. By default it writes to the current branch's handoff directory under `.codex/handoffs/<branch-slug>/`. Run it from the repo root or pass `--repo`.
 
 Example:
 
 ```powershell
-python C:\Users\user\.codex\skills\git-handoff\scripts\draft_handoff.py --repo . --output CODEX_HANDOFF.md
+python C:\Users\user\.codex\skills\git-handoff\scripts\draft_handoff.py --repo .
 ```
 
 After running the script, revise the note so it reflects the actual user goal, what was completed in this session, and the best next step.

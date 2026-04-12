@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
+import re
 import socket
 import subprocess
 import sys
 from pathlib import Path
+
+
+BRANCH_SLUG_RE = re.compile(r"[^A-Za-z0-9._-]+")
+TIMESTAMP_FORMAT = "%Y.%m.%d_%H-%M"
 
 
 def run_git(repo: Path, *args: str) -> str:
@@ -30,6 +35,16 @@ def try_git(repo: Path, *args: str) -> str:
     if result.returncode != 0:
         return ""
     return result.stdout.strip()
+
+
+def branch_slug(branch: str) -> str:
+    slug = BRANCH_SLUG_RE.sub("__", branch.strip())
+    return slug or "detached-head"
+
+
+def default_output_path(repo: Path, branch: str) -> Path:
+    timestamp = datetime.now().astimezone().strftime(TIMESTAMP_FORMAT)
+    return repo / ".codex" / "handoffs" / branch_slug(branch) / f"HANDOFF_NOTE_{timestamp}.md"
 
 
 def repo_snapshot(repo: Path) -> dict[str, object]:
@@ -142,24 +157,28 @@ Replace this with the session goal in plain language.
 
 ## Resume prompt
 
-Read CODEX_HANDOFF.md, verify the current branch and git status, then continue with the next step.
+Read the latest handoff note for this branch from `.codex/handoffs/<branch-slug>/` (or the repo root fallback), verify the current branch and git status, then continue with the next step.
 """
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Draft a git handoff note from repo state.")
     parser.add_argument("--repo", default=".", help="Path to the git repository")
-    parser.add_argument("--output", default="CODEX_HANDOFF.md", help="Path to write the markdown handoff note")
+    parser.add_argument(
+        "--output",
+        help="Path to write the markdown handoff note. Defaults to .codex/handoffs/<branch-slug>/HANDOFF_NOTE_YYYY.MM.DD_HH-MM.md",
+    )
     args = parser.parse_args()
 
     repo = Path(args.repo).resolve()
-    output = Path(args.output)
-    if not output.is_absolute():
-        output = (repo / output).resolve()
 
     try:
         run_git(repo, "rev-parse", "--git-dir")
         snapshot = repo_snapshot(repo)
+        output = Path(args.output) if args.output else default_output_path(repo, str(snapshot["branch"]))
+        if not output.is_absolute():
+            output = (repo / output).resolve()
+        output.parent.mkdir(parents=True, exist_ok=True)
         markdown = render_markdown(repo, snapshot)
         output.write_text(markdown, encoding="utf-8")
     except RuntimeError as exc:
