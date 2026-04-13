@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ubuntu VPS Bootstrap"
+  short_description: "Securely bootstrap a new Ubuntu VPS"
+  default_prompt: "Use $setup-ubuntu-vps to harden a fresh Ubuntu server, add a non-root sudo user, and switch SSH to key-only access."
