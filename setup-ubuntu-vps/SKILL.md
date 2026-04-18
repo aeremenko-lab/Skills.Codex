@@ -56,7 +56,7 @@ python C:\Users\user\.codex\skills\setup-ubuntu-vps\scripts\bootstrap_ubuntu_vps
 The bundled script is intentionally conservative:
 
 - Connect as the initial admin user with password authentication.
-- Install `sudo`, `openssh-server`, `ufw`, `fail2ban`, and `unattended-upgrades`.
+- Install `sudo`, `openssh-server`, `ufw`, and `fail2ban`.
 - Create the new user if needed and add it to the `sudo` group.
 - Grant passwordless sudo through `/etc/sudoers.d/`.
 - Install the provided public key into the new user's `authorized_keys`.
@@ -90,4 +90,4 @@ The bundled script is intentionally conservative:
 - Tell the user the new login command, for example `ssh -i <private-key> anton@203.0.113.10`.
 - Tell the user the alias-based login command, for example `ssh my-vps`.
 - Tell the user which hardening steps were applied.
-- Call out any follow-up items that were intentionally left out of the basic bootstrap, such as app deployment, Docker setup, backups, monitoring, or a stricter firewall policy.
+- Call out any follow-up items that were intentionally left out of the basic bootstrap, such as automatic security patching via `ubuntu-security-auto`, app deployment, Docker setup, backups, monitoring, or a stricter firewall policy.
