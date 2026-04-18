@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ubuntu Security Auto"
+  short_description: "Set up unattended Ubuntu security updates"
+  default_prompt: "Use $ubuntu-security-auto to configure boring unattended security upgrades on this Ubuntu VPS."
