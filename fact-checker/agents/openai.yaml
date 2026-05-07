@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fact Checker"
+  short_description: "Verify claims with sourced evidence"
+  default_prompt: "Use $fact-checker to verify this claim, cite reliable sources, and explain the verdict with uncertainty."
