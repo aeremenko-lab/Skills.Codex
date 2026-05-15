@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interim Plan Review"
+  short_description: "Review code against docs and plans"
+  default_prompt: "Use $interim-plan-review to audit this repo against its roadmap and architecture docs."

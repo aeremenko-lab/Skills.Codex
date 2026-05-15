@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Review"
+  short_description: "Audit code against architecture docs"
+  default_prompt: "Use $architecture-review to compare this repository implementation against its architecture docs and write an evidence-backed drift report."
