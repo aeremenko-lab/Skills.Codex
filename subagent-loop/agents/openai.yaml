@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subagent Loop"
+  short_description: "Subagent plan-execute-review loop"
+  default_prompt: "Use the subagent-loop skill to coordinate this task: restate the goal, plan with a read-only subagent, execute with a worker subagent, review against acceptance criteria with a third subagent, and report when commit-ready."
