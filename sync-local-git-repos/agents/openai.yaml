@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sync Local Git Repos"
+  short_description: "Fetch and fast-forward local Git repos"
+  default_prompt: "Use $sync-local-git-repos to fetch and fast-forward clean repos under C:\\10.CODE."
