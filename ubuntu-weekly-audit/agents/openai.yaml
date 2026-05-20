@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ubuntu Weekly Audit"
+  short_description: "Routine non-VPN VPS security checks"
+  default_prompt: "Use $ubuntu-weekly-audit to run the weekly non-VPN VPS security audit."
